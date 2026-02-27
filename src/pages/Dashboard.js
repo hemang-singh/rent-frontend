@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import API_URL from "../config";
 
 function Dashboard() {
   const [form, setForm] = useState({
@@ -24,7 +25,7 @@ function Dashboard() {
   // Load all properties
   const loadProperties = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/property");
+      const res = await axios.get(`${API_URL}/api/property`);
       setProperties(res.data);
     } catch (err) {
       console.error(err);
@@ -41,7 +42,7 @@ function Dashboard() {
       return;
     }
     try {
-      await axios.post("http://localhost:5000/api/property", form, {
+      await axios.post(`${API_URL}/api/property`, form, {
         headers: { Authorization: token },
       });
       setForm({ title: "", location: "", price: "", contact: "", type: "", description: "" });
@@ -56,7 +57,7 @@ function Dashboard() {
   const deleteProperty = async (id) => {
     if (!window.confirm("Are you sure you want to delete this property?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/property/${id}`, { headers: { Authorization: token } });
+      await axios.delete(`${API_URL}/api/property/${id}`, { headers: { Authorization: token } });
       loadProperties();
     } catch (err) {
       alert("You can only delete your own property");
