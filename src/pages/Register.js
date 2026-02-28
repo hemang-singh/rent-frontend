@@ -15,8 +15,7 @@ function Register() {
       alert("Registration successful");
       navigate("/");
     } catch (err) {
-      console.error(err);
-      alert("Registration failed");
+      alert("Registration failed: " + (err.response?.data?.msg || err.message));
     }
   };
 
@@ -27,7 +26,11 @@ function Register() {
           <h3 className="text-center mb-3">Register</h3>
           <input className="form-control mb-2" name="name" placeholder="Name" onChange={handleChange} />
           <input className="form-control mb-2" name="email" placeholder="Email" onChange={handleChange} />
-          <input className="form-control mb-3" name="password" type="password" placeholder="Password" onChange={handleChange} />
+          <input className="form-control mb-2" name="password" type="password" placeholder="Password" onChange={handleChange} />
+          <select className="form-select mb-2" name="role" onChange={handleChange}>
+            <option value="buyer">Buyer</option>
+            <option value="seller">Seller</option>
+          </select>
           <button className="btn btn-success w-100" onClick={handleSubmit}>Register</button>
           <p className="text-center mt-3">
             Already have an account? <Link to="/">Login</Link>

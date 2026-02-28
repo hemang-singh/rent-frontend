@@ -12,11 +12,19 @@ function Login() {
   const handleSubmit = async () => {
     try {
       const res = await axios.post(`${API_URL}/api/auth/login`, form);
+
+      // Store token
       localStorage.setItem("token", res.data.token);
+
+      // Store user info as single object
+      localStorage.setItem("user", JSON.stringify({
+        id: res.data.user.id,
+        role: res.data.user.role
+      }));
+
       navigate("/dashboard");
     } catch (err) {
-      console.error(err);
-      alert("Login failed");
+      alert("Login failed: " + (err.response?.data?.msg || err.message));
     }
   };
 
@@ -26,7 +34,7 @@ function Login() {
         <div className="card shadow p-4">
           <h3 className="text-center mb-3">Login</h3>
           <input className="form-control mb-2" name="email" placeholder="Email" onChange={handleChange} />
-          <input className="form-control mb-3" name="password" type="password" placeholder="Password" onChange={handleChange} />
+          <input className="form-control mb-3" type="password" name="password" placeholder="Password" onChange={handleChange} />
           <button className="btn btn-primary w-100" onClick={handleSubmit}>Login</button>
           <p className="text-center mt-3">
             New user? <Link to="/register">Register</Link>
