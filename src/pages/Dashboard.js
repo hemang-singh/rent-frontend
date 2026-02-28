@@ -14,7 +14,12 @@ function Dashboard() {
   });
 
   const [properties, setProperties] = useState([]);
-  const [filter, setFilter] = useState({ location: "", minPrice: "", maxPrice: "" });
+  const [filter, setFilter] = useState({
+    location: "",
+    minPrice: "",
+    maxPrice: "",
+  });
+
   const [userRole, setUserRole] = useState("buyer");
   const [userId, setUserId] = useState("");
 
@@ -25,7 +30,6 @@ function Dashboard() {
   useEffect(() => {
     if (!token) navigate("/");
 
-    // Get user info from localStorage
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const user = JSON.parse(storedUser);
@@ -36,60 +40,73 @@ function Dashboard() {
     loadProperties();
   }, [navigate, token]);
 
-  // Load properties from backend
   const loadProperties = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/property`);
       setProperties(res.data);
     } catch (err) {
-      console.error(err);
       alert("Error loading properties");
     }
   };
 
-  // Add property (sellers only)
   const addProperty = async () => {
     if (!form.title || !form.location || !form.price || !form.contact || !form.type) {
       alert("Please fill all required fields");
       return;
     }
+
     try {
       await axios.post(`${API_URL}/api/property`, form, {
         headers: { Authorization: token },
       });
-      setForm({ title: "", location: "", price: "", contact: "", type: "", description: "", area: "" });
+
+      setForm({
+        title: "",
+        location: "",
+        price: "",
+        contact: "",
+        type: "",
+        description: "",
+        area: "",
+      });
+
       loadProperties();
     } catch (err) {
-      console.error(err);
       alert("Error adding property");
     }
   };
 
-  // Delete property (only owner)
   const deleteProperty = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this property?")) return;
+    if (!window.confirm("Are you sure you want to delete this property?"))
+      return;
+
     try {
-      await axios.delete(`${API_URL}/api/property/${id}`, { headers: { Authorization: token } });
+      await axios.delete(`${API_URL}/api/property/${id}`, {
+        headers: { Authorization: token },
+      });
       loadProperties();
     } catch (err) {
       alert("You can delete only your own property");
     }
   };
 
-  // Logout
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/");
   };
 
-  // Filter properties (fixed numeric comparison)
   const filteredProperties = properties.filter((p) => {
-    const price = Number(p.price); // ensure numeric
+    const price = Number(p.price);
     const minPrice = filter.minPrice ? Number(filter.minPrice) : 0;
     const maxPrice = filter.maxPrice ? Number(filter.maxPrice) : Infinity;
 
-    if (filter.location && !p.location.toLowerCase().includes(filter.location.toLowerCase())) return false;
+    if (
+      filter.location &&
+      !p.location.toLowerCase().includes(filter.location.toLowerCase())
+    )
+      return false;
+
     if (price < minPrice) return false;
     if (price > maxPrice) return false;
 
@@ -97,93 +114,230 @@ function Dashboard() {
   });
 
   return (
-    <div className="container mt-4">
+    <div style={{ backgroundColor: "#f5f7fa", minHeight: "100vh" }}>
+      
+      <style>{`
+        .header {
+          background-color: #1f2937;
+          color: white;
+        }
+
+        .section-card {
+          background: white;
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
+        }
+
+        .property-card {
+          background: white;
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
+          transition: 0.2s ease;
+        }
+
+        .property-card:hover {
+          box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+          transform: translateY(-3px);
+        }
+
+        .label-title {
+          font-weight: 600;
+          color: #374151;
+          font-size: 14px;
+        }
+
+        .property-value {
+          font-size: 14px;
+          color: #111827;
+        }
+
+        .property-price {
+          font-size: 20px;
+          font-weight: 700;
+          color: #111827;
+        }
+      `}</style>
+
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="text-primary">HouseHunt Dashboard</h2>
-        <button className="btn btn-outline-danger" onClick={logout}>Logout</button>
+      <div className="header px-4 py-3 d-flex justify-content-between align-items-center">
+        <h4 className="m-0">HouseHunt Dashboard</h4>
+        <button className="btn btn-outline-light btn-sm" onClick={logout}>
+          Logout
+        </button>
       </div>
 
-      {/* Add Property Form (sellers only) */}
-      {userRole === "seller" && (
-        <div className="card shadow-lg p-4 mb-4 rounded">
-          <h5 className="mb-3 text-secondary">Add New Property</h5>
-          <div className="row g-3">
-            <div className="col-md-4">
-              <input className="form-control" name="title" placeholder="Property Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            </div>
-            <div className="col-md-3">
-              <input className="form-control" name="location" placeholder="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-            </div>
-            <div className="col-md-2">
-              <input className="form-control" type="number" name="price" placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-            </div>
-            <div className="col-md-3">
-              <input className="form-control" name="contact" placeholder="Contact" value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} />
-            </div>
-            <div className="col-md-3 mt-2">
-              <select className="form-select" name="type" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                <option value="">Property Type</option>
-                <option value="Apartment">Apartment</option>
-                <option value="House">House</option>
-                <option value="PG">PG</option>
-                <option value="Flat">Flat</option>
-              </select>
-            </div>
-            <div className="col-md-3 mt-2">
-              <input className="form-control" type="number" name="area" placeholder="Area (sq.ft)" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} />
-            </div>
-            <div className="col-md-9 mt-2">
-              <textarea className="form-control" name="description" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}></textarea>
-            </div>
-            <div className="col-md-2 mt-2">
-              <button className="btn btn-success w-100" onClick={addProperty}>Add Property</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="container py-4">
 
-      {/* Filter Bar (buyers only) */}
-      {userRole === "buyer" && (
-        <div className="card shadow-sm p-3 mb-4 rounded">
-          <h5 className="mb-3 text-secondary">Filter Properties</h5>
-          <div className="row g-2">
-            <div className="col-md-4">
-              <input className="form-control" placeholder="Location" value={filter.location} onChange={(e) => setFilter({ ...filter, location: e.target.value })} />
-            </div>
-            <div className="col-md-3">
-              <input className="form-control" type="number" placeholder="Min Price" value={filter.minPrice} onChange={(e) => setFilter({ ...filter, minPrice: e.target.value })} />
-            </div>
-            <div className="col-md-3">
-              <input className="form-control" type="number" placeholder="Max Price" value={filter.maxPrice} onChange={(e) => setFilter({ ...filter, maxPrice: e.target.value })} />
-            </div>
-          </div>
-        </div>
-      )}
+        {/* Seller Section */}
+        {userRole === "seller" && (
+          <div className="section-card p-4 mb-4">
+            <h5 className="mb-4">Add New Property</h5>
 
-      {/* Property List */}
-      <h5 className="mb-3 text-secondary">All Properties</h5>
-      {filteredProperties.length === 0 && <p className="text-muted">No properties found.</p>}
-      <div className="row">
-        {filteredProperties.map((p) => (
-          <div key={p._id} className="col-md-4 mb-4">
-            <div className="card p-3 shadow-sm">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <h5 className="text-primary">{p.title}</h5>
-                <span className="badge bg-info text-dark">{p.type}</span>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="label-title">Property Title</label>
+                <input className="form-control"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                />
               </div>
-              <p><strong>Price:</strong> ₹{p.price}</p>
-              <p><strong>Location:</strong> {p.location}</p>
-              <p><strong>Area:</strong> {p.area || "N/A"} sq.ft</p>
-              <p><strong>Contact:</strong> {p.contact}</p>
-              <p><strong>Description:</strong> {p.description || "N/A"}</p>
-              <p className="text-muted"><em>Added by: {p.owner?.name}</em></p>
-              {userRole === "seller" && p.owner?._id === userId && (
-                <button className="btn btn-danger btn-sm mt-2" onClick={() => deleteProperty(p._id)}>Delete</button>
-              )}
+
+              <div className="col-md-6">
+                <label className="label-title">Location</label>
+                <input className="form-control"
+                  value={form.location}
+                  onChange={(e) => setForm({ ...form, location: e.target.value })}
+                />
+              </div>
+
+              <div className="col-md-4">
+                <label className="label-title">Price (INR)</label>
+                <input type="number" className="form-control"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: e.target.value })}
+                />
+              </div>
+
+              <div className="col-md-4">
+                <label className="label-title">Area (sq.ft)</label>
+                <input type="number" className="form-control"
+                  value={form.area}
+                  onChange={(e) => setForm({ ...form, area: e.target.value })}
+                />
+              </div>
+
+              <div className="col-md-4">
+                <label className="label-title">Property Type</label>
+                <select className="form-select"
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value })}
+                >
+                  <option value="">Select Type</option>
+                  <option>Apartment</option>
+                  <option>House</option>
+                  <option>Flat</option>
+                  <option>PG</option>
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="label-title">Contact Information</label>
+                <input className="form-control"
+                  value={form.contact}
+                  onChange={(e) => setForm({ ...form, contact: e.target.value })}
+                />
+              </div>
+
+              <div className="col-md-12">
+                <label className="label-title">Property Description</label>
+                <textarea rows="3" className="form-control"
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                />
+              </div>
+
+              <div className="col-md-12 text-end">
+                <button className="btn btn-primary px-4" onClick={addProperty}>
+                  Add Property
+                </button>
+              </div>
             </div>
           </div>
-        ))}
+        )}
+
+        {/* Buyer Filter */}
+        {userRole === "buyer" && (
+          <div className="section-card p-4 mb-4">
+            <h5 className="mb-3">Search & Filter Properties</h5>
+            <div className="row g-3">
+              <div className="col-md-4">
+                <label className="label-title">Location</label>
+                <input className="form-control"
+                  value={filter.location}
+                  onChange={(e) => setFilter({ ...filter, location: e.target.value })}
+                />
+              </div>
+              <div className="col-md-4">
+                <label className="label-title">Minimum Price</label>
+                <input type="number" className="form-control"
+                  value={filter.minPrice}
+                  onChange={(e) => setFilter({ ...filter, minPrice: e.target.value })}
+                />
+              </div>
+              <div className="col-md-4">
+                <label className="label-title">Maximum Price</label>
+                <input type="number" className="form-control"
+                  value={filter.maxPrice}
+                  onChange={(e) => setFilter({ ...filter, maxPrice: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Property Listing */}
+        <h5 className="mb-3">Available Properties</h5>
+
+        {filteredProperties.length === 0 ? (
+          <div className="section-card p-4 text-center">
+            No properties found based on your criteria.
+          </div>
+        ) : (
+          <div className="row g-4">
+            {filteredProperties.map((p) => (
+              <div key={p._id} className="col-md-6 col-lg-4">
+                <div className="property-card p-3 h-100">
+
+                  <h6 className="fw-bold">{p.title}</h6>
+                  <div className="property-price mb-2">₹ {p.price}</div>
+
+                  <div className="mb-1">
+                    <span className="label-title">Location: </span>
+                    <span className="property-value">{p.location}</span>
+                  </div>
+
+                  <div className="mb-1">
+                    <span className="label-title">Area: </span>
+                    <span className="property-value">
+                      {p.area ? `${p.area} sq.ft` : "Not specified"}
+                    </span>
+                  </div>
+
+                  <div className="mb-1">
+                    <span className="label-title">Property Type: </span>
+                    <span className="property-value">{p.type}</span>
+                  </div>
+
+                  <div className="mb-1">
+                    <span className="label-title">Contact: </span>
+                    <span className="property-value">{p.contact}</span>
+                  </div>
+
+                  <div className="mt-2">
+                    <span className="label-title">Description:</span>
+                    <div className="property-value">
+                      {p.description || "No description provided."}
+                    </div>
+                  </div>
+
+                  <div className="mt-2 text-muted small">
+                    Added by: {p.owner?.name}
+                  </div>
+
+                  {userRole === "seller" &&
+                    p.owner?._id === userId && (
+                      <button
+                        className="btn btn-outline-danger btn-sm mt-3"
+                        onClick={() => deleteProperty(p._id)}
+                      >
+                        Delete Property
+                      </button>
+                    )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
